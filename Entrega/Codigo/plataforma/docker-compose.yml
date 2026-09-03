@@ -1,0 +1,38 @@
+# Plataforma de IoT do projeto GreenPi Monitor.
+#
+# Sobe uma instancia do ThingsBoard Community Edition com PostgreSQL embutido,
+# que concentra broker MQTT, banco de dados de series temporais, motor de regras
+# e o dashboard web.
+#
+#   docker compose up -d          # sobe a plataforma
+#   docker compose logs -f        # acompanha a inicializacao (leva alguns minutos)
+#   docker compose down           # para a plataforma (os dados ficam nos volumes)
+#
+# Portas publicadas:
+#   8080  interface web e API REST   (dentro do container o servico usa a 9090)
+#   1883  broker MQTT                (usado pelo aplicativo Android)
+#   7070  transporte de edge
+#
+# Credenciais padrao da primeira execucao:
+#   Tenant .......: tenant@thingsboard.org / tenant
+#   Administrador : sysadmin@thingsboard.org / sysadmin
+# Troque essas senhas antes de expor a instancia fora da rede local.
+
+services:
+  thingsboard:
+    image: thingsboard/tb-postgres:latest
+    container_name: thingsboard
+    restart: unless-stopped
+    ports:
+      - "8080:9090"
+      - "1883:1883"
+      - "7070:7070"
+    environment:
+      TB_QUEUE_TYPE: in-memory
+    volumes:
+      - tb-data:/data
+      - tb-logs:/var/log/thingsboard
+
+volumes:
+  tb-data:
+  tb-logs:

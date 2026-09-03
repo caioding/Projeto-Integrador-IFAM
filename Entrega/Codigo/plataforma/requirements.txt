@@ -1,0 +1,7 @@
+# O script provisionar_thingsboard.py usa apenas a biblioteca padrao do Python.
+# Nenhum pacote externo precisa ser instalado.
+#
+# Requisito: Python 3.9 ou superior.
+#
+# Modulos utilizados (todos da biblioteca padrao):
+#   json, os, sys, uuid, urllib.request, urllib.parse, urllib.error

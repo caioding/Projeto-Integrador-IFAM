@@ -1,0 +1,10 @@
+# Modelo do arquivo local.properties.
+#
+# Copie para "local.properties" e ajuste o caminho do Android SDK da sua
+# maquina. Este arquivo e especifico do ambiente e nao deve ser versionado.
+#
+#   macOS   : /Users/<usuario>/Library/Android/sdk
+#   Linux   : /home/<usuario>/Android/Sdk
+#   Windows : C\:\\Users\\<usuario>\\AppData\\Local\\Android\\Sdk
+
+sdk.dir=/Users/SEU-USUARIO/Library/Android/sdk

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 660" width="1180" height="660" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1180" height="660" fill="#F4F6F4"/>
+  <text x="590" y="42" text-anchor="middle" font-size="26" font-weight="bold" fill="#1B5E20">GreenPi Monitor — Arquitetura do Sistema</text>
+  <text x="590" y="68" text-anchor="middle" font-size="14" fill="#5F6368">Monitoramento ambiental com Raspberry Pi 5 + Android embarcado</text>
+
+  <!-- BLOCO 1: dispositivo embarcado -->
+  <rect x="30" y="95" width="360" height="500" rx="14" fill="#FFFFFF" stroke="#2E7D32" stroke-width="2.5"/>
+  <rect x="30" y="95" width="360" height="42" rx="14" fill="#2E7D32"/>
+  <rect x="30" y="120" width="360" height="17" fill="#2E7D32"/>
+  <text x="210" y="123" text-anchor="middle" font-size="16" font-weight="bold" fill="#FFFFFF">Raspberry Pi 5 — Android 16 (AOSP)</text>
+
+  <rect x="52" y="155" width="316" height="86" rx="10" fill="#E8F5E9" stroke="#A5D6A7"/>
+  <text x="210" y="177" text-anchor="middle" font-size="14" font-weight="bold" fill="#1B5E20">Sense HAT rev. 2 — sensores</text>
+  <text x="210" y="198" text-anchor="middle" font-size="12.5" fill="#33691E">HTS221 (0x5F) · umidade e temperatura</text>
+  <text x="210" y="216" text-anchor="middle" font-size="12.5" fill="#33691E">LPS25H (0x5C) · pressão barométrica</text>
+  <text x="210" y="234" text-anchor="middle" font-size="12.5" fill="#33691E">TCS3400 (0x39) · luminosidade</text>
+
+  <path d="M210 241 L210 268" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#a)"/>
+  <text x="222" y="259" font-size="11.5" fill="#2E7D32" font-weight="bold">I2C · /dev/i2c-1</text>
+
+  <rect x="52" y="270" width="316" height="52" rx="10" fill="#FFF8E1" stroke="#FFD54F"/>
+  <text x="210" y="291" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#7A5900">libsensehat.so — camada nativa (C)</text>
+  <text x="210" y="310" text-anchor="middle" font-size="12" fill="#7A5900">ioctl(I2C_RDWR) via JNI / NDK</text>
+
+  <path d="M210 322 L210 348" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <rect x="52" y="350" width="316" height="72" rx="10" fill="#E3F2FD" stroke="#90CAF9"/>
+  <text x="210" y="371" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#0D47A1">SenseHat.kt — conversão e calibração</text>
+  <text x="210" y="390" text-anchor="middle" font-size="12" fill="#0D47A1">interpolação de fábrica do HTS221</text>
+  <text x="210" y="408" text-anchor="middle" font-size="12" fill="#0D47A1">compensação térmica do auto-aquecimento</text>
+
+  <rect x="52" y="434" width="150" height="56" rx="10" fill="#F3E5F5" stroke="#CE93D8"/>
+  <text x="127" y="454" text-anchor="middle" font-size="12" font-weight="bold" fill="#4A148C">/sys/class/thermal</text>
+  <text x="127" y="472" text-anchor="middle" font-size="11.5" fill="#4A148C">temperatura do SoC</text>
+
+  <rect x="218" y="434" width="150" height="56" rx="10" fill="#F3E5F5" stroke="#CE93D8"/>
+  <text x="293" y="454" text-anchor="middle" font-size="12" font-weight="bold" fill="#4A148C">WifiManager</text>
+  <text x="293" y="472" text-anchor="middle" font-size="11.5" fill="#4A148C">RSSI do enlace</text>
+
+  <path d="M127 490 L127 508 L210 508 L210 522" stroke="#7B1FA2" stroke-width="2" fill="none"/>
+  <path d="M293 490 L293 508 L210 508" stroke="#7B1FA2" stroke-width="2" fill="none"/>
+  <path d="M210 508 L210 524" stroke="#7B1FA2" stroke-width="2" marker-end="url(#a)"/>
+
+  <rect x="52" y="526" width="316" height="50" rx="10" fill="#2E7D32"/>
+  <text x="210" y="547" text-anchor="middle" font-size="13.5" font-weight="bold" fill="#FFFFFF">CollectorService</text>
+  <text x="210" y="565" text-anchor="middle" font-size="11.5" fill="#C8E6C9">serviço de primeiro plano · thread própria · wake lock</text>
+
+  <!-- SETA MQTT -->
+  <path d="M390 550 L470 550 L470 300 L520 300" stroke="#E65100" stroke-width="3" fill="none" marker-end="url(#o)"/>
+  <text x="472" y="425" font-size="13" font-weight="bold" fill="#E65100">MQTT</text>
+  <text x="472" y="443" font-size="11.5" fill="#E65100">QoS 1 · porta 1883</text>
+  <text x="472" y="461" font-size="11" fill="#E65100">v1/devices/me/telemetry</text>
+  <text x="472" y="479" font-size="11" fill="#E65100">a cada 10 s</text>
+
+  <!-- BLOCO 2: plataforma -->
+  <rect x="522" y="180" width="300" height="240" rx="14" fill="#FFFFFF" stroke="#0277BD" stroke-width="2.5"/>
+  <rect x="522" y="180" width="300" height="42" rx="14" fill="#0277BD"/>
+  <rect x="522" y="205" width="300" height="17" fill="#0277BD"/>
+  <text x="672" y="208" text-anchor="middle" font-size="16" font-weight="bold" fill="#FFFFFF">ThingsBoard CE (Docker)</text>
+
+  <rect x="544" y="238" width="256" height="38" rx="8" fill="#E1F5FE" stroke="#81D4FA"/>
+  <text x="672" y="262" text-anchor="middle" font-size="12.5" fill="#01579B">Broker MQTT — ingestão da telemetria</text>
+  <rect x="544" y="284" width="256" height="38" rx="8" fill="#E1F5FE" stroke="#81D4FA"/>
+  <text x="672" y="308" text-anchor="middle" font-size="12.5" fill="#01579B">PostgreSQL — série temporal</text>
+  <rect x="544" y="330" width="256" height="38" rx="8" fill="#E1F5FE" stroke="#81D4FA"/>
+  <text x="672" y="354" text-anchor="middle" font-size="12.5" fill="#01579B">Rule Engine — regras e alarmes</text>
+  <rect x="544" y="376" width="256" height="34" rx="8" fill="#E1F5FE" stroke="#81D4FA"/>
+  <text x="672" y="398" text-anchor="middle" font-size="12.5" fill="#01579B">Dashboard web</text>
+
+  <!-- SETA REST -->
+  <path d="M822 300 L880 300" stroke="#6A1B9A" stroke-width="3" fill="none" marker-end="url(#p)"/>
+  <text x="851" y="272" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#6A1B9A">REST</text>
+  <text x="851" y="287" text-anchor="middle" font-size="10.5" fill="#6A1B9A">HTTP+JWT</text>
+  <text x="851" y="320" text-anchor="middle" font-size="10.5" fill="#6A1B9A">8080</text>
+
+  <!-- BLOCO 3: painel -->
+  <rect x="882" y="180" width="268" height="240" rx="14" fill="#FFFFFF" stroke="#6A1B9A" stroke-width="2.5"/>
+  <rect x="882" y="180" width="268" height="42" rx="14" fill="#6A1B9A"/>
+  <rect x="882" y="205" width="268" height="17" fill="#6A1B9A"/>
+  <text x="1016" y="208" text-anchor="middle" font-size="16" font-weight="bold" fill="#FFFFFF">App Android — painel</text>
+
+  <rect x="902" y="238" width="228" height="80" rx="8" fill="#F3E5F5" stroke="#CE93D8"/>
+  <text x="1016" y="260" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#4A148C">Cartões com alerta por cor</text>
+  <text x="1016" y="280" text-anchor="middle" font-size="11.5" fill="#4A148C">verde OK · amarelo atenção</text>
+  <text x="1016" y="298" text-anchor="middle" font-size="11.5" fill="#4A148C">vermelho alerta</text>
+  <rect x="902" y="326" width="228" height="80" rx="8" fill="#F3E5F5" stroke="#CE93D8"/>
+  <text x="1016" y="348" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#4A148C">Histórico em gráficos</text>
+  <text x="1016" y="368" text-anchor="middle" font-size="11.5" fill="#4A148C">últimas 3 horas</text>
+  <text x="1016" y="386" text-anchor="middle" font-size="11.5" fill="#4A148C">View customizada em Canvas</text>
+
+  <rect x="882" y="440" width="268" height="72" rx="12" fill="#EDE7F6" stroke="#B39DDB" stroke-dasharray="5 4"/>
+  <text x="1016" y="464" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#4527A0">O mesmo APK nos dois papéis</text>
+  <text x="1016" y="484" text-anchor="middle" font-size="11.5" fill="#4527A0">com Sense HAT → coletor + painel</text>
+  <text x="1016" y="502" text-anchor="middle" font-size="11.5" fill="#4527A0">sem Sense HAT → apenas painel</text>
+
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#2E7D32"/></marker>
+    <marker id="o" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#E65100"/></marker>
+    <marker id="p" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 z" fill="#6A1B9A"/></marker>
+  </defs>
+</svg>

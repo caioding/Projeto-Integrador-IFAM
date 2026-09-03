@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cor de fundo do botao principal: esmaecida quando ele esta desabilitado
+     (por exemplo, num celular sem o Sense HAT). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#BDBDBD" android:state_enabled="false" />
+    <item android:color="@color/green_primary" />
+</selector>

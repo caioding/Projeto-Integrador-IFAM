@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="green_primary">#2E7D32</color>
+    <color name="green_dark">#1B5E20</color>
+    <color name="green_light">#A5D6A7</color>
+    <color name="status_ok">#2E7D32</color>
+    <color name="status_atencao">#F9A825</color>
+    <color name="status_alerta">#C62828</color>
+    <color name="status_desconhecido">#757575</color>
+    <color name="bg">#F4F6F4</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="text_primary">#1C1B1F</color>
+    <color name="text_secondary">#5F6368</color>
+    <color name="chart_temp">#E65100</color>
+    <color name="chart_hum">#0277BD</color>
+    <color name="chart_light">#F9A825</color>
+    <color name="chart_press">#6A1B9A</color>
+</resources>

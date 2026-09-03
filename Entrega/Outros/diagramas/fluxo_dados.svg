@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 620" width="1180" height="620" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1180" height="620" fill="#FFFFFF"/>
+  <text x="590" y="40" text-anchor="middle" font-size="25" font-weight="bold" fill="#1B5E20">Fluxo de Dados — de um registrador I2C ao gráfico</text>
+  <text x="590" y="64" text-anchor="middle" font-size="13.5" fill="#5F6368">Um ciclo completo de coleta, executado a cada 10 segundos</text>
+
+  <!-- trilha vertical de etapas -->
+  <g font-size="13">
+    <!-- 1 -->
+    <circle cx="70" cy="120" r="20" fill="#2E7D32"/><text x="70" y="126" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">1</text>
+    <rect x="105" y="98" width="470" height="46" rx="9" fill="#E8F5E9" stroke="#A5D6A7"/>
+    <text x="120" y="118" font-size="13.5" font-weight="bold" fill="#1B5E20">Leitura em bloco no barramento I2C</text>
+    <text x="120" y="136" font-size="12" fill="#33691E">ioctl(I2C_RDWR) com escrita do registrador + repeated start</text>
+    <rect x="595" y="98" width="555" height="46" rx="9" fill="#FAFAFA" stroke="#E0E0E0"/>
+    <text x="610" y="118" font-size="12" font-family="Menlo, monospace" fill="#37474F">HTS221 0x5F reg 0xA8 → 4 bytes: 0x6C 0xEE 0x50 0x04</text>
+    <text x="610" y="136" font-size="12" font-family="Menlo, monospace" fill="#37474F">LPS25H 0x5C reg 0xA8 → 5 bytes | TCS3400 0x39 reg 0x94 → 8 bytes</text>
+
+    <path d="M70 140 L70 172" stroke="#BDBDBD" stroke-width="2" marker-end="url(#g)"/>
+    <!-- 2 -->
+    <circle cx="70" cy="192" r="20" fill="#2E7D32"/><text x="70" y="198" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">2</text>
+    <rect x="105" y="170" width="470" height="46" rx="9" fill="#E3F2FD" stroke="#90CAF9"/>
+    <text x="120" y="190" font-size="13.5" font-weight="bold" fill="#0D47A1">Conversão para unidades de engenharia</text>
+    <text x="120" y="208" font-size="12" fill="#0D47A1">interpolação linear com os 16 coeficientes de fábrica do HTS221</text>
+    <rect x="595" y="170" width="555" height="46" rx="9" fill="#FAFAFA" stroke="#E0E0E0"/>
+    <text x="610" y="190" font-size="12" font-family="Menlo, monospace" fill="#37474F">umidade = H0 + (H1−H0)·(Hout−H0_T0)/(H1_T0−H0_T0) = 45,8 %rH</text>
+    <text x="610" y="208" font-size="12" font-family="Menlo, monospace" fill="#37474F">pressão = bruto24/4096 = 1008,69 hPa · bruta = 36,7 °C</text>
+
+    <path d="M70 212 L70 244" stroke="#BDBDBD" stroke-width="2" marker-end="url(#g)"/>
+    <!-- 3 -->
+    <circle cx="70" cy="264" r="20" fill="#F9A825"/><text x="70" y="270" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">3</text>
+    <rect x="105" y="242" width="470" height="46" rx="9" fill="#FFF8E1" stroke="#FFD54F"/>
+    <text x="120" y="262" font-size="13.5" font-weight="bold" fill="#7A5900">Compensação do auto-aquecimento</text>
+    <text x="120" y="280" font-size="12" fill="#7A5900">usa a temperatura do SoC lida em /sys/class/thermal</text>
+    <rect x="595" y="242" width="555" height="46" rx="9" fill="#FAFAFA" stroke="#E0E0E0"/>
+    <text x="610" y="262" font-size="12" font-family="Menlo, monospace" fill="#37474F">T = 36,7 − (52,9 − 36,7)/1,6 = 26,6 °C</text>
+    <text x="610" y="280" font-size="12" font-family="Menlo, monospace" fill="#37474F">o valor bruto continua sendo publicado, para auditoria</text>
+
+    <path d="M70 284 L70 316" stroke="#BDBDBD" stroke-width="2" marker-end="url(#g)"/>
+    <!-- 4 -->
+    <circle cx="70" cy="336" r="20" fill="#2E7D32"/><text x="70" y="342" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">4</text>
+    <rect x="105" y="314" width="470" height="46" rx="9" fill="#E8F5E9" stroke="#A5D6A7"/>
+    <text x="120" y="334" font-size="13.5" font-weight="bold" fill="#1B5E20">Classificação do ambiente</text>
+    <text x="120" y="352" font-size="12" fill="#33691E">pior status entre temperatura, umidade e luminosidade</text>
+    <rect x="595" y="314" width="555" height="46" rx="9" fill="#FAFAFA" stroke="#E0E0E0"/>
+    <text x="610" y="334" font-size="12" font-family="Menlo, monospace" fill="#37474F">26,6 °C ∈ [18,28] → OK · 45,8 %rH ∈ [40,70] → OK</text>
+    <text x="610" y="352" font-size="12" font-family="Menlo, monospace" fill="#37474F">luz 702 &gt; 100 → OK  ⇒  status = "OK"</text>
+
+    <path d="M70 356 L70 388" stroke="#BDBDBD" stroke-width="2" marker-end="url(#g)"/>
+    <!-- 5 -->
+    <circle cx="70" cy="408" r="20" fill="#E65100"/><text x="70" y="414" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">5</text>
+    <rect x="105" y="386" width="470" height="46" rx="9" fill="#FBE9E7" stroke="#FFAB91"/>
+    <text x="120" y="406" font-size="13.5" font-weight="bold" fill="#BF360C">Publicação MQTT no ThingsBoard</text>
+    <text x="120" y="424" font-size="12" fill="#BF360C">tópico v1/devices/me/telemetry · QoS 1 · token no usuário</text>
+    <rect x="595" y="386" width="555" height="46" rx="9" fill="#FAFAFA" stroke="#E0E0E0"/>
+    <text x="610" y="406" font-size="11.5" font-family="Menlo, monospace" fill="#37474F">{"temperature":26.57,"temperature_raw":36.70,"humidity":45.8,</text>
+    <text x="610" y="424" font-size="11.5" font-family="Menlo, monospace" fill="#37474F"> "pressure":1008.69,"light":702,"cpu_temp":52.9,"status":"OK"}</text>
+
+    <path d="M70 428 L70 460" stroke="#BDBDBD" stroke-width="2" marker-end="url(#g)"/>
+    <!-- 6 -->
+    <circle cx="70" cy="480" r="20" fill="#0277BD"/><text x="70" y="486" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">6</text>
+    <rect x="105" y="458" width="470" height="46" rx="9" fill="#E1F5FE" stroke="#81D4FA"/>
+    <text x="120" y="478" font-size="13.5" font-weight="bold" fill="#01579B">Persistência e visualização na plataforma</text>
+    <text x="120" y="496" font-size="12" fill="#01579B">série temporal em PostgreSQL + dashboard web</text>
+    <rect x="595" y="458" width="555" height="46" rx="9" fill="#FAFAFA" stroke="#E0E0E0"/>
+    <text x="610" y="478" font-size="12" font-family="Menlo, monospace" fill="#37474F">cada chave vira uma série indexada por timestamp</text>
+    <text x="610" y="496" font-size="12" font-family="Menlo, monospace" fill="#37474F">6 cartões de valor corrente + 4 gráficos históricos</text>
+
+    <path d="M70 500 L70 532" stroke="#BDBDBD" stroke-width="2" marker-end="url(#g)"/>
+    <!-- 7 -->
+    <circle cx="70" cy="552" r="20" fill="#6A1B9A"/><text x="70" y="558" text-anchor="middle" font-size="15" font-weight="bold" fill="#fff">7</text>
+    <rect x="105" y="530" width="470" height="46" rx="9" fill="#F3E5F5" stroke="#CE93D8"/>
+    <text x="120" y="550" font-size="13.5" font-weight="bold" fill="#4A148C">Consulta de volta pelo aplicativo</text>
+    <text x="120" y="568" font-size="12" fill="#4A148C">REST autenticado por JWT, na Pi 5 ou num celular</text>
+    <rect x="595" y="530" width="555" height="46" rx="9" fill="#FAFAFA" stroke="#E0E0E0"/>
+    <text x="610" y="550" font-size="11.5" font-family="Menlo, monospace" fill="#37474F">POST /api/auth/login → GET /api/tenant/devices?deviceName=…</text>
+    <text x="610" y="568" font-size="11.5" font-family="Menlo, monospace" fill="#37474F">GET /api/plugins/telemetry/DEVICE/{id}/values/timeseries</text>
+  </g>
+  <defs><marker id="g" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+    <path d="M0,0 L8,4 L0,8 z" fill="#BDBDBD"/></marker></defs>
+</svg>

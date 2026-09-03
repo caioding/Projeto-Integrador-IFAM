@@ -1,0 +1,28 @@
+# Artefatos de build do Gradle e do NDK
+**/build/
+**/.gradle/
+**/.cxx/
+*.apk
+*.aab
+
+# Configuração específica da máquina (use local.properties.example)
+local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Sistema
+.DS_Store
+
+# Dependências de ferramentas auxiliares
+node_modules/
+
+# Projeto de exemplo do curso, mantido apenas como referência local
+SimpleMQTT/
+
+# Zips gerados manualmente a partir das pastas (contêm artefatos de build).
+# O pacote de entrega válido é Entrega/GreenPi_Monitor_Codigo.zip.
+Entrega/Codigo.zip
+Entrega/Outros.zip
