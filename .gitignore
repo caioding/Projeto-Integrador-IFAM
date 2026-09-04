@@ -23,6 +23,4 @@ node_modules/
 SimpleMQTT/
 
 # Zips gerados manualmente a partir das pastas (contêm artefatos de build).
-# O pacote de entrega válido é Entrega/GreenPi_Monitor_Codigo.zip.
-Entrega/Codigo.zip
-Entrega/Outros.zip
+*.zip

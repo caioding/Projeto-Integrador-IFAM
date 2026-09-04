@@ -1,7 +1,7 @@
 # GreenPi Monitor
 
 Sistema IoT de monitoramento ambiental para apoio ao estudo de plantas.
-Projeto final do **Curso de Android e Internet das Coisas (IoT)** — Unicamp e Instituto de Pesquisas Eldorado.
+Projeto final.
 
 Uma **Raspberry Pi 5 com Android 16 (AOSP)** lê os sensores do **Sense HAT** pelo
 barramento I2C, compensa o auto-aquecimento da placa, publica a telemetria por
