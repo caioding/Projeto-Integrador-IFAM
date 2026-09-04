@@ -1,7 +1,7 @@
 # GreenPi Monitor
 
 Sistema IoT de monitoramento ambiental para apoio ao estudo de plantas.
-Projeto final.
+Projeto Integrador — IFAM.
 
 Uma **Raspberry Pi 5 com Android 16 (AOSP)** lê os sensores do **Sense HAT** pelo
 barramento I2C, compensa o auto-aquecimento da placa, publica a telemetria por
@@ -41,20 +41,17 @@ presente ele coleta e publica; sem ele, opera apenas como painel.
 
 | Caminho | Conteúdo |
 |---|---|
-| `Entrega/Codigo/app-android` | Aplicativo Android em Kotlin + camada nativa em C |
-| `Entrega/Codigo/firmware` | Acesso de baixo nível ao I2C e script de validação do hardware |
-| `Entrega/Codigo/plataforma` | ThingsBoard em Docker, provisionamento e dashboard |
-| `Entrega/Codigo/midia` | Imagens da demonstração |
-| `Entrega/Outros` | Diagramas, evidências, roteiro da apresentação e anotações |
-| `Entrega/*.pptx` | Status Report 1 e Status Report 2 |
-| `Entrega/*.docx` | Relatório de Projeto Final |
-| `PLANEJAMENTO.md` | Planejamento e levantamento técnico inicial |
+| `Codigo/app-android` | Aplicativo Android em Kotlin + camada nativa em C |
+| `Codigo/firmware` | Acesso de baixo nível ao I2C e script de validação do hardware |
+| `Codigo/plataforma` | ThingsBoard em Docker, provisionamento e dashboard |
+| `Outros/diagramas` | Diagramas de arquitetura, fluxo de dados e hardware (PNG e SVG) |
+| `Outros/evidencias` | Capturas de tela do aplicativo e do dashboard |
 
 ## Começando
 
 ```bash
 # 1. Plataforma
-cd Entrega/Codigo/plataforma
+cd Codigo/plataforma
 docker compose up -d
 cp config.example.env .env      # ajuste o IP e a senha
 set -a && . ./.env && set +a
@@ -70,7 +67,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 Depois, configure host, porta, token e nome do dispositivo na tela de
 Configurações do app e acione **Iniciar coleta**.
 
-Instruções completas em [`Entrega/Codigo/README.md`](Entrega/Codigo/README.md).
+Instruções completas em [`Codigo/README.md`](Codigo/README.md).
 
 ## Destaque técnico — compensação do auto-aquecimento
 
@@ -91,7 +88,7 @@ compensação auditável.
 JDK 17+ · Android SDK 34 · NDK 30.0.14904198 · CMake 3.22.1 ·
 Docker 20.10+ · Python 3.9+
 
-Lista completa em [`Entrega/Codigo/DEPENDENCIAS.md`](Entrega/Codigo/DEPENDENCIAS.md).
+Lista completa em [`Codigo/DEPENDENCIAS.md`](Codigo/DEPENDENCIAS.md).
 
 ## Segurança
 
