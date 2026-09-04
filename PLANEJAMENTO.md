@@ -164,9 +164,9 @@ Entrega/
 | Fase | Entrega | Estado |
 |---|---|---|
 | 0 | Levantamento e validação do hardware | ✅ concluída |
-| 1 | ThingsBoard CE em Docker + device + dashboard web | em andamento |
-| 2 | Camada nativa I2C (JNI) + leitura dos 3 sensores | pendente |
-| 3 | Foreground Service + publicação MQTT | pendente |
-| 4 | Tela de Dashboard no app (REST) + alertas por cor | pendente |
-| 5 | Testes end-to-end e coleta de evidências | pendente |
-| 6 | Status Report 1, Status Report 2, Relatório Final e .zip | pendente |
+| 1 | ThingsBoard CE em Docker + device + dashboard web | ✅ concluída |
+| 2 | Camada nativa I2C (JNI) + leitura dos 3 sensores | ✅ concluída |
+| 3 | Foreground Service + publicação MQTT | ✅ concluída |
+| 4 | Tela de Dashboard no app (REST) + alertas por cor | ✅ concluída |
+| 5 | Testes end-to-end e coleta de evidências | ✅ concluída |
+| 6 | Status Report 1, Status Report 2, Relatório Final e .zip | ✅ concluída |
