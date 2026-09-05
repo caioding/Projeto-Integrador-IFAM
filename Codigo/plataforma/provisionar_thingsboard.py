@@ -132,18 +132,23 @@ def build_configuration(device_id, catalog):
         raw = catalog[fqn]["descriptor"]["defaultConfig"]
         return json.loads(raw) if isinstance(raw, str) else json.loads(json.dumps(raw))
 
-    def data_key(name, label, color, units, decimals, seed, series=False):
+    def data_key(name, label, color, units, decimals, seed, series=False,
+                 key_type="timeseries", post=None):
         # A estrutura reproduz integralmente a de um dataKey criado pela
         # interface do ThingsBoard: campos ausentes fazem a serie nao ser
         # desenhada, sem qualquer mensagem de erro.
+        #
+        # key_type "attribute" le um atributo da entidade em vez de uma serie
+        # temporal; "post" recebe um corpo de funcao JavaScript que o
+        # ThingsBoard aplica ao valor antes de exibi-lo.
         settings = {}
         if series:
             settings = json.loads(json.dumps(SERIES_SETTINGS_TEMPLATE))
         return {
-            "name": name, "type": "timeseries", "label": label, "color": color,
+            "name": name, "type": key_type, "label": label, "color": color,
             "settings": settings, "units": units, "decimals": decimals,
             "_hash": 0.1 + seed * 0.07, "aggregationType": None, "funcBody": None,
-            "usePostProcessing": None, "postFuncBody": None,
+            "usePostProcessing": post is not None, "postFuncBody": post,
         }
 
     def add(fqn, title, keys, size_x, size_y, row, col, units="", decimals=1, icon=None):
@@ -181,45 +186,58 @@ def build_configuration(device_id, catalog):
         }
         layout[wid] = {"sizeX": size_x, "sizeY": size_y, "row": row, "col": col}
 
+    # Linha 0 - faixa de conexao, no topo e ocupando a largura toda.
+    #
+    # Sem ela o painel e enganoso: com a Raspberry Pi desligada, todos os
+    # cartoes abaixo continuam mostrando a ultima leitura gravada, sem nada
+    # que denuncie que aquilo parou no tempo. O atributo 'active' e mantido
+    # pelo proprio ThingsBoard e vira falso apos INACTIVITY_TIMEOUT_MS sem
+    # telemetria (ver set_inactivity_timeout).
+    add("cards.value_card", "Conexao da Raspberry Pi",
+        [data_key("active", "Conexao", "#2E7D32", "", 0, 14,
+                  key_type="attribute",
+                  post="return value ? 'ONLINE' : 'SEM CONTATO';")],
+        24, 2, 0, 0, "", 0, icon="lan")
+
     # Linha 1 - leitura corrente
     add("indoor_temperature_card", "Temperatura",
         [data_key("temperature", "Temperatura", "#E65100", "°C", 1, 0)],
-        4, 4, 0, 0, "°C", 1)
+        4, 4, 2, 0, "°C", 1)
     add("indoor_humidity_card", "Umidade",
         [data_key("humidity", "Umidade", "#0277BD", "%", 0, 1)],
-        4, 4, 0, 4, "%", 0)
+        4, 4, 2, 4, "%", 0)
     add("indoor_illuminance_card", "Luminosidade",
         [data_key("light", "Luminosidade", "#F9A825", "", 0, 2)],
-        4, 4, 0, 8, "", 0)
+        4, 4, 2, 8, "", 0)
     add("cards.value_card", "Pressao atmosferica",
         [data_key("pressure", "Pressao", "#6A1B9A", "hPa", 1, 3)],
-        4, 4, 0, 12, "hPa", 1, icon="speed")
+        4, 4, 2, 12, "hPa", 1, icon="speed")
     add("cards.value_card", "Status do ambiente",
         [data_key("status", "Status", "#2E7D32", "", 0, 4)],
-        4, 4, 0, 16, "", 0, icon="eco")
+        4, 4, 2, 16, "", 0, icon="eco")
     add("cards.value_card", "Temperatura do SoC",
         [data_key("cpu_temp", "CPU", "#C62828", "°C", 1, 5)],
-        4, 4, 0, 20, "°C", 1, icon="memory")
+        4, 4, 2, 20, "°C", 1, icon="memory")
 
     # Linha 2 - series temporais das grandezas ambientais
     add("time_series_chart", "Temperatura e umidade",
         [data_key("temperature", "Temperatura (C)", "#E65100", "°C", 1, 6, series=True),
          data_key("humidity", "Umidade (%rH)", "#0277BD", "%", 1, 7, series=True)],
-        12, 6, 4, 0)
+        12, 6, 6, 0)
     add("time_series_chart", "Luminosidade e pressao",
         [data_key("light", "Luminosidade", "#F9A825", "", 0, 8, series=True),
          data_key("pressure", "Pressao (hPa)", "#6A1B9A", "hPa", 1, 9, series=True)],
-        12, 6, 4, 12)
+        12, 6, 6, 12)
 
     # Linha 3 - evidencia da compensacao termica e qualidade do enlace
     add("time_series_chart", "Compensacao termica: bruto x compensado x SoC",
         [data_key("temperature_raw", "HTS221 bruto", "#9E9E9E", "°C", 1, 10, series=True),
          data_key("temperature", "Compensado", "#E65100", "°C", 1, 11, series=True),
          data_key("cpu_temp", "SoC", "#C62828", "°C", 1, 12, series=True)],
-        12, 6, 10, 0)
+        12, 6, 12, 0)
     add("time_series_chart", "Qualidade do enlace Wi-Fi (RSSI)",
         [data_key("wifi_rssi", "RSSI (dBm)", "#00695C", "dBm", 0, 13, series=True)],
-        12, 6, 10, 12)
+        12, 6, 12, 12)
 
     return {
         "description": "Monitoramento ambiental com Raspberry Pi 5 + Sense HAT (Android AOSP)",
