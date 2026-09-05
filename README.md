@@ -83,6 +83,36 @@ O fator `k` é ajustável na tela de configurações, porque depende da montagem
 O valor bruto continua sendo publicado em `temperature_raw`, o que mantém a
 compensação auditável.
 
+## Deteccao de perda de contato
+
+Uma plataforma de telemetria guarda a ultima leitura recebida e a devolve
+indefinidamente. Se a Raspberry Pi for desligada, tanto o app quanto o dashboard
+continuariam exibindo aquele valor como se fosse a condicao atual — o modo de
+falha mais perigoso do sistema, porque nao parece uma falha. Os dois lados
+tratam isso de forma independente:
+
+| Camada | Prazo | Como funciona |
+|---|---|---|
+| Aplicativo | **30 s** | Compara o timestamp da amostra, vindo da plataforma, com o relogio local. Vencido o prazo, o cartao vira `SEM CONTATO`, os valores ficam esmaecidos e a idade da ultima leitura aparece na tela. |
+| Dashboard | **60 s** | O ThingsBoard mantem o atributo `active` do dispositivo e o derruba apos o `inactivityTimeout`. A faixa no topo do painel le esse atributo e alterna entre `ONLINE` (verde) e `SEM CONTATO` (vermelho). |
+
+Os prazos sao diferentes de proposito. O app e o painel que se olha de perto,
+entao reage rapido: `3 x intervalo de coleta`, com piso de 30 s, tolera duas
+publicacoes perdidas por instabilidade de rede sem alarme falso. O ThingsBoard e
+o registro historico, e um prazo maior evita marcar o dispositivo como inativo
+por uma perda momentanea de pacote. Na pratica, o celular acusa primeiro e o
+dashboard confirma em seguida.
+
+Para alinhar os dois, ajuste o intervalo na tela de configuracoes do app e
+reprovisione a plataforma com o mesmo valor:
+
+```bash
+TB_INACTIVITY_MS=30000 python3 provisionar_thingsboard.py
+```
+
+Nao vale reduzir abaixo de ~20 s: com coleta a cada 10 s, uma unica publicacao
+perdida ja derrubaria o aviso.
+
 ## Requisitos
 
 JDK 17+ · Android SDK 34 · NDK 30.0.14904198 · CMake 3.22.1 ·
