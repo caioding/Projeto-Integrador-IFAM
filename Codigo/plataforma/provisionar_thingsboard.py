@@ -151,7 +151,8 @@ def build_configuration(device_id, catalog):
             "usePostProcessing": post is not None, "postFuncBody": post,
         }
 
-    def add(fqn, title, keys, size_x, size_y, row, col, units="", decimals=1, icon=None):
+    def add(fqn, title, keys, size_x, size_y, row, col, units="", decimals=1,
+            icon=None, value_color_fn=None):
         wid = str(uuid.uuid4())
         cfg = default_config(fqn)
         # Datasource ligado diretamente ao dispositivo, no mesmo formato que a
@@ -174,6 +175,9 @@ def build_configuration(device_id, catalog):
             settings["valueFont"]["size"] = 28
         if icon:
             settings["icon"] = icon
+        if value_color_fn and isinstance(settings.get("valueColor"), dict):
+            settings["valueColor"]["type"] = "function"
+            settings["valueColor"]["colorFunction"] = value_color_fn
         # Desliga a animacao dos graficos: a curva aparece imediatamente ao abrir
         # o painel, o que ajuda tanto na demonstracao quanto na captura de telas.
         if isinstance(settings.get("animation"), dict):
@@ -193,11 +197,21 @@ def build_configuration(device_id, catalog):
     # que denuncie que aquilo parou no tempo. O atributo 'active' e mantido
     # pelo proprio ThingsBoard e vira falso apos INACTIVITY_TIMEOUT_MS sem
     # telemetria (ver set_inactivity_timeout).
+    #
+    # O atributo chega ao widget como texto, entao a leitura precisa ser
+    # explicita: em JavaScript a string "false" e um valor verdadeiro, e um
+    # teste ingenuo como "value ? ..." daria ONLINE justamente quando a Pi
+    # esta fora do ar. A funcao de cor faz a mesma normalizacao por conta
+    # propria porque recebe o valor antes do pos-processamento.
     add("cards.value_card", "Conexao da Raspberry Pi",
         [data_key("active", "Conexao", "#2E7D32", "", 0, 14,
                   key_type="attribute",
-                  post="return value ? 'ONLINE' : 'SEM CONTATO';")],
-        24, 2, 0, 0, "", 0, icon="lan")
+                  post="var v = ('' + value).toLowerCase();\n"
+                       "return (v === 'true' || v === '1') ? 'ONLINE' : 'SEM CONTATO';")],
+        24, 2, 0, 0, "", 0, icon="lan",
+        value_color_fn="var v = ('' + value).toLowerCase();\n"
+                       "var on = (v === 'true' || v === '1' || v === 'online');\n"
+                       "return on ? '#2E7D32' : '#C62828';")
 
     # Linha 1 - leitura corrente
     add("indoor_temperature_card", "Temperatura",
