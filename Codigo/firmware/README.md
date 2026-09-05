@@ -13,6 +13,7 @@ uma **camada nativa em C**, compilada com o NDK e carregada pelo aplicativo.
 | `../app-android/app/src/main/cpp/CMakeLists.txt` | Compilacao da biblioteca `libsensehat.so` |
 | `../app-android/app/src/main/java/com/greenpi/monitor/SenseHat.kt` | Mapa de registradores e conversao para unidades de engenharia |
 | `validar_sensores.sh` | Verificacao do hardware pelo terminal, com `i2c-tools` |
+| `matriz_arco_iris.sh` | Restaura o padrao de fabrica da matriz de LED |
 
 ## Por que acesso direto ao barramento
 
@@ -36,7 +37,7 @@ de root porque `/dev/i2c-1` tem modo `crw-rw-rw-` nesta imagem.
 | `0x39` | TCS3400 | `0x90` | Luminosidade e cor (RGBC) |
 | `0x6A` | LSM9DS1 | `0x68` | Acelerometro e giroscopio (nao usado) |
 | `0x1C` | LSM9DS1 | — | Magnetometro (reservado pelo kernel) |
-| `0x46` | ATtiny88 | — | Joystick e matriz de LED (fora do escopo) |
+| `0x46` | ATtiny88 | — | Joystick e matriz de LED (o app nao usa; ver secao abaixo) |
 
 ## Sequencia de inicializacao
 
@@ -68,14 +69,28 @@ LPS25H:
     temperatura = 42.5 + valor_bruto_16_bits / 480    [graus C]
 
 TCS3400:
-    luminosidade = canal "clear" (16 bits), indice proporcional a iluminancia
+    luminosidade = canal "clear" (16 bits), em contagens brutas do conversor
 ```
+
+As contagens do TCS3400 **nao sao lux**: a escala de 0 a 65535 depende do tempo
+de integracao e do ganho configurados acima. Mudar `ATIME` ou `CONTROL` muda o
+numero sem que a luz tenha mudado. O valor serve para tendencia e para separar
+claro de escuro, nao como medida fotometrica.
 
 ## Validacao pelo terminal
 
 ```bash
 adb push validar_sensores.sh /data/local/tmp/
 adb shell sh /data/local/tmp/validar_sensores.sh
+```
+
+Com mais de um aparelho conectado — tipicamente a Pi e um emulador — o `adb`
+aborta com *"more than one device"*. Selecione a Pi pelo modelo:
+
+```bash
+PI=$(adb devices | grep Pi_5 -m1 | cut -f1)
+adb -s $PI push validar_sensores.sh /data/local/tmp/
+adb -s $PI shell sh /data/local/tmp/validar_sensores.sh
 ```
 
 O script varre o barramento, confere a identidade de cada chip pelo WHO_AM_I,
@@ -93,3 +108,61 @@ cd ../app-android && ./gradlew assembleDebug
 Requer **NDK 30.0.14904198** e **CMake 3.22.1**. A saida `libsensehat.so` e
 gerada para `arm64-v8a` (Raspberry Pi 5 e emuladores em Apple Silicon) e
 `x86_64` (emuladores em maquinas Intel).
+
+## Matriz de LED: apagar antes de coletar, restaurar depois
+
+A matriz 8x8 do Sense HAT acende com um arco-iris quando a placa e energizada e
+fica a poucos centimetros do TCS3400. Como o sensor nao distingue a luz do
+ambiente da luz da propria placa, a leitura sai inflada: medido neste kit, entre
+490 e 545 contagens vinham do LED. Antes de coletar dados que va usar:
+
+```bash
+sensehat_cli clear
+```
+
+O padrao original **nao volta com um reboot do Android** — so cortando a
+alimentacao da placa, porque quem o escreve e o firmware do ATtiny88 ao
+energizar, e o Android nunca reescreve a matriz. Para restaurar sem tirar da
+tomada, use o `matriz_arco_iris.sh`.
+
+### Como executar o `matriz_arco_iris.sh`
+
+Direto no shell da Pi (o arquivo sobrevive a reboots, porque `/data/local/tmp`
+fica na particao persistente):
+
+```bash
+sh /data/local/tmp/matriz_arco_iris.sh
+```
+
+Do Mac, sem entrar no shell:
+
+```bash
+adb -s $(adb devices | grep Pi_5 -m1 | cut -f1) shell sh /data/local/tmp/matriz_arco_iris.sh
+```
+
+Se o arquivo nao estiver na Pi, envie primeiro:
+
+```bash
+adb -s $(adb devices | grep Pi_5 -m1 | cut -f1) push matriz_arco_iris.sh /data/local/tmp/
+```
+
+O README principal traz a mesma restauracao condensada em uma linha, para colar
+no shell quando o script nao estiver por perto.
+
+### Layout do framebuffer da matriz
+
+Vale registrar, porque nao e o que a documentacao do Sense HAT sugere. Os 192
+bytes em `0x46` sao **tres planos de 64**, indexados por `y*8+x`:
+
+| Faixa | Canal |
+|---|---|
+| `0-63` | vermelho |
+| `64-127` | verde |
+| `128-191` | azul |
+
+Sao 5 bits por canal (0 a 31), e o `sensehat_cli setpixel` recebe 0-255 e aplica
+`valor >> 3`. Para inspecionar o estado atual da matriz:
+
+```bash
+i2cdump -y 1 0x46
+```

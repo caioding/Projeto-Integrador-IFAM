@@ -39,7 +39,7 @@ O script e idempotente e, ao final, imprime os valores que devem ser digitados
 na tela de Configuracoes do aplicativo Android:
 
 ```
-Host ......................: 192.168.0.8
+Host ......................: <IP da maquina que roda a plataforma>
 Porta MQTT ................: 1883
 Porta HTTP ................: 8080
 Token de acesso ...........: <token gerado pela plataforma>
@@ -66,10 +66,30 @@ O aplicativo publica em `v1/devices/me/telemetry`, com QoS 1:
 | `temperature_raw` | °C | Leitura direta do HTS221, sem compensacao |
 | `humidity` | %rH | Umidade relativa |
 | `pressure` | hPa | Pressao barometrica |
-| `light` | contagens | Canal "clear" do TCS3400 (indice de luminosidade) |
+| `light` | contagens | Canal "clear" do TCS3400, em contagens brutas (nao e lux) |
 | `cpu_temp` | °C | Temperatura do SoC, usada na compensacao |
 | `wifi_rssi` | dBm | Potencia do sinal Wi-Fi |
 | `status` | texto | `OK`, `ATENCAO` ou `ALERTA` |
+
+## Deteccao de dispositivo inativo
+
+O `provisionar_thingsboard.py` grava no dispositivo o atributo
+`inactivityTimeout`, com **60 s** por padrao. Passado esse tempo sem telemetria,
+o ThingsBoard marca o dispositivo como inativo e derruba o atributo `active`.
+
+A faixa no topo do dashboard le esse atributo e alterna entre `ONLINE` (verde) e
+`SEM CONTATO` (vermelho). Sem ela o painel seria enganoso: com a Raspberry Pi
+desligada, todos os cartoes seguiriam exibindo a ultima leitura recebida como se
+fosse a condicao atual.
+
+Para ajustar o prazo:
+
+```bash
+TB_INACTIVITY_MS=30000 python3 provisionar_thingsboard.py
+```
+
+Nao vale reduzir abaixo de ~20 s: com coleta a cada 10 s, uma unica publicacao
+perdida ja derrubaria o aviso.
 
 ## Importar o dashboard manualmente
 
@@ -86,3 +106,10 @@ alias de entidade para apontar para o seu dispositivo.
   `8080:9090` do compose e o que expoe a interface na 8080 do host.
 - Para parar tudo sem perder os dados: `docker compose down`. Para apagar
   tambem os dados: `docker compose down -v`.
+- O ThingsBoard mantem a configuracao do dashboard em cache na aba aberta.
+  Depois de reprovisionar, recarregue a pagina para ver as mudancas.
+- Mudancas no painel devem ser feitas no script, nao pela interface web: o
+  proximo provisionamento reconstroi o dashboard inteiro e sobrescreveria.
+- Atributos chegam aos widgets como texto. Em JavaScript a string `"false"` e um
+  valor verdadeiro, entao um teste `value ? ... : ...` sobre o `active` daria
+  `ONLINE` justamente com a Pi desligada; normalize antes de comparar.
