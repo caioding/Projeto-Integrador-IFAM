@@ -28,3 +28,6 @@ SimpleMQTT/
 # Cache do Python
 __pycache__/
 *.pyc
+
+# Anotacoes locais de trabalho, fora do pacote de entrega
+CONTINUIDADE.md
