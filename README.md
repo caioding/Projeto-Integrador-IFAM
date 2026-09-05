@@ -102,10 +102,16 @@ Portanto, **antes de iniciar a coleta**, apague a matriz na Raspberry Pi:
 sensehat_cli clear
 ```
 
-E preciso repetir a cada boot. O aplicativo nao controla a matriz: ele fala
-apenas com os enderecos `0x5F`, `0x5C` e `0x39`, nunca com o `0x46` do ATtiny88
-que a comanda. Dados de luminosidade coletados sem esse passo estao inflados e
-nao representam o ambiente.
+O aplicativo nao controla a matriz: ele fala apenas com os enderecos `0x5F`,
+`0x5C` e `0x39`, nunca com o `0x46` do ATtiny88 que a comanda. Dados de
+luminosidade coletados sem esse passo estao inflados e nao representam o
+ambiente.
+
+Para reacender o padrao arco-iris de fabrica — por exemplo depois da coleta, ou
+para a foto da montagem — use o script `Codigo/firmware/matriz_arco_iris.sh`. Ele
+reproduz o padrao exato, byte a byte, e evita ter que tirar a placa da tomada: o
+padrao original nao volta com um reboot do Android, so cortando a alimentacao,
+porque quem o escreve e o firmware do ATtiny88 ao energizar.
 
 ## Deteccao de perda de contato
 
