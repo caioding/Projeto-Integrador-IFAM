@@ -82,6 +82,20 @@ docker exec thingsboard sh -c 'psql -U thingsboard -d thingsboard -t -A -F"|" -c
 O usuario do Postgres e `thingsboard`, nao `postgres`. Para ver se ha sessao MQTT
 aberta: `docker logs thingsboard --since 10m | grep openConnections`.
 
+No `i2cset` desta imagem (toybox) o argumento `MODE` e obrigatorio, senao o erro
+e o enganoso `mode too long`:
+
+```bash
+adb -s <id> shell i2cset -y -f 1 0x39 0x81 0xc0 b    # ATIME
+adb -s <id> shell i2cget -y 1 0x39 0x94              # CDATA low
+```
+
+O `i2cdump -y 1 0x46` despeja os 192 bytes da matriz de LED. Ao ler o sensor de
+luz manualmente, **descarte a primeira leitura**: o ciclo de integracao e de
+178 ms e a primeira costuma vir do ciclo anterior. Repita duas ou tres vezes
+antes de concluir qualquer coisa — uma medicao unica ja me levou a duvidar de
+uma conclusao correta.
+
 Tambem da para ler a tela da Pi sem sair do terminal, o que evita pedir
 capturas ao usuario:
 
@@ -122,12 +136,26 @@ serve para tendencia e para distinguir claro de escuro, nao como medida
 fotometrica. Os canais R, G e B sao lidos do barramento e descartados;
 `SensorReading` os carrega, `EnvironmentSample` nao.
 
-**A matriz de LED contamina a leitura de luz.** Ela acende inteira no boot,
-fica acesa ate o desligamento e esta a centimetros do sensor. Medido neste kit:
-545 contagens acesa contra 79 apagada — 85% do valor vinha da propria placa.
-Rode `sensehat_cli clear` na Pi antes de qualquer coleta cujos dados importem, e
-desconfie de qualquer historico de luminosidade anterior a essa descoberta. O
-app nao controla a matriz: fala so com `0x5F`, `0x5C` e `0x39`.
+**A matriz de LED contamina a leitura de luz.** Ela acende com um arco-iris ao
+energizar a placa e esta a centimetros do sensor. Medido neste kit: 545 contagens
+acesa contra 79 apagada, e numa segunda medicao 660 contra 171 — cerca de 490 a
+545 contagens vinham da propria placa. Rode `sensehat_cli clear` na Pi antes de
+qualquer coleta cujos dados importem, e desconfie de historico de luminosidade
+anterior a essa descoberta. O app nao controla a matriz: fala so com `0x5F`,
+`0x5C` e `0x39`.
+
+**O arco-iris so volta cortando a energia** — reiniciar o Android nao o repoe,
+porque quem o escreve e o firmware do ATtiny88 ao energizar, e o Android nunca
+reescreve a matriz. Para restaurar sem tirar da tomada existe
+`Codigo/firmware/matriz_arco_iris.sh` (e a mesma coisa em uma linha, no README).
+As cores sairam do proprio framebuffer, lido com `i2cdump -y 1 0x46`.
+
+**O framebuffer da matriz nao tem o layout que a documentacao sugere.** Nao e
+`8R+8G+8B` por linha: sao tres planos de 64 bytes — vermelho `0-63`, verde
+`64-127`, azul `128-191` — indexados por `y*8+x`, com 5 bits por canal. Descobri
+sondando pixels isolados e vendo qual byte mudava; a suposicao errada custou uma
+restauracao com 128 de 192 bytes divergentes. O `sensehat_cli setpixel` recebe
+0-255 e aplica `valor >> 3`.
 
 ## Demonstracoes fora de casa
 

@@ -113,6 +113,16 @@ reproduz o padrao exato, byte a byte, e evita ter que tirar a placa da tomada: o
 padrao original nao volta com um reboot do Android, so cortando a alimentacao,
 porque quem o escreve e o firmware do ATtiny88 ao energizar.
 
+O mesmo resultado cabe numa linha, para colar direto no shell da Pi quando o
+script nao estiver por perto. As cores foram lidas do framebuffer do ATtiny e
+reproduzem o padrao original nos 192 bytes:
+
+```bash
+i=0; for c in "255 0 255" "255 0 255" "255 0 255" "255 0 223" "167 0 63" "31 79 0" "0 255 0" "0 255 0" "0 255 0" "0 127 15" "31 23 103" "151 0 255" "255 0 255" "255 0 255" "255 0 255" "255 0 255" "0 191 0" "0 255 0" "0 255 0" "0 255 0" "0 255 0" "0 255 39" "0 87 175" "63 0 255" "255 0 255" "255 0 255" "255 0 207" "151 0 55" "31 87 0" "0 255 0" "0 255 0" "0 255 0" "0 119 23" "39 15 119" "167 0 255" "255 0 255" "255 0 255" "255 0 255" "255 0 255" "255 31 151" "0 255 0" "0 255 0" "0 255 0" "0 255 0" "0 239 47" "0 71 191" "71 0 255" "239 0 255" "255 0 255" "255 0 191" "143 15 47" "23 95 0" "0 255 0" "0 255 0" "0 255 0" "0 255 0" "47 15 127" "175 0 255" "255 0 255" "255 0 255" "255 0 255" "255 0 255" "255 31 127" "95 167 23"; do sensehat_cli setpixel $((i%8)) $((i/8)) $c; i=$((i+1)); done
+```
+
+Para apagar, `sensehat_cli clear`.
+
 ## Deteccao de perda de contato
 
 Uma plataforma de telemetria guarda a ultima leitura recebida e a devolve
