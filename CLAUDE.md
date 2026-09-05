@@ -106,7 +106,52 @@ adb -s <id> shell uiautomator dump /sdcard/ui.xml   # texto e coordenadas dos el
   cada execucao. Mudancas no painel se fazem nele, nao pela interface web — o
   proximo provisionamento sobrescreveria.
 
+## Hardware: o que os numeros significam
+
+**A placa e um Sense HAT rev. 2.** O `i2cdetect -y 1` no kit mostra `0x39`
+(TCS3400, luz e cor), `0x46` (ATtiny88, joystick e matriz de LED), `0x5C`
+(LPS25H), `0x5F` (HTS221), `0x6A` (LSM9DS1) e `0x1C` como `UU` — o magnetometro
+esta preso a um driver do kernel. O material da disciplina documenta so os
+enderecos da **V1** e nao menciona o `0x39`; nao estranhe a ausencia.
+
+**A luminosidade nao e lux.** E a contagem bruta do canal *clear* do TCS3400,
+com 178 ms de integracao e ganho 16x (`ATIME=0xC0`, `CONTROL=0x02`). A escala
+vai de 0 a 65535 e muda se alguem mexer nesses registradores. Para plantas a
+grandeza correta seria PAR em µmol·m⁻²·s⁻¹, que este sensor nao mede — o valor
+serve para tendencia e para distinguir claro de escuro, nao como medida
+fotometrica. Os canais R, G e B sao lidos do barramento e descartados;
+`SensorReading` os carrega, `EnvironmentSample` nao.
+
+**A matriz de LED contamina a leitura de luz.** Ela acende inteira no boot,
+fica acesa ate o desligamento e esta a centimetros do sensor. Medido neste kit:
+545 contagens acesa contra 79 apagada — 85% do valor vinha da propria placa.
+Rode `sensehat_cli clear` na Pi antes de qualquer coleta cujos dados importem, e
+desconfie de qualquer historico de luminosidade anterior a essa descoberta. O
+app nao controla a matriz: fala so com `0x5F`, `0x5C` e `0x39`.
+
+## Demonstracoes fora de casa
+
+O ThingsBoard roda no MacBook, entao a Pi aponta para o IP **do Mac**, que muda
+a cada rede. Descobrir com `ipconfig getifaddr en0` e atualizar nas
+Configuracoes do app da Pi. Tres pontos que ja custaram tempo:
+
+- **O emulador nao precisa disso**: configurado com host `10.0.2.2`, ele sempre
+  alcanca o Mac, em qualquer rede.
+- **Wi-Fi de escola e de evento costuma isolar clientes** entre si. Nesse caso a
+  Pi nao alcanca o Mac com IP nenhum, e nao ha configuracao que resolva. A
+  defesa e levar a propria rede (hotspot do celular).
+- **O adb por rede quebra junto**, porque o IP da Pi tambem muda. Para mexer em
+  codigo fora de casa, leve cabo USB.
+
 ## Armadilhas conhecidas
+
+**Limiares calibrados contra ruido passam despercebidos.** Os limiares de luz
+eram `>100` OK e `>=30` atencao. Como a matriz de LED injetava ~466 contagens em
+toda leitura, o valor nunca descia de 100 — o alerta de pouca luz nao podia
+disparar nem no escuro total, e ninguem notou porque o cartao vivia verde. Uma
+funcionalidade morta que parece funcionar e mais dificil de achar que uma que
+falha. Ao mexer em limiar, confirme que as duas pontas da faixa sao alcancaveis
+na pratica.
 
 **Widgets do ThingsBoard falham em silencio.** Um dataKey sem o bloco completo de
 `settings` simplesmente nao desenha a serie, sem erro nenhum. Por isso existe o
