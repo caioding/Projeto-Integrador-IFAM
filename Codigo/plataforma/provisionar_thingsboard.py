@@ -16,6 +16,8 @@ Variaveis de ambiente aceitas (ver config.example.env):
     TB_PASSWORD  senha do usuario                  (padrao tenant)
     TB_DEVICE    nome do dispositivo               (padrao GreenPi-RPi5)
     TB_PUBLIC    "1" para publicar o dashboard sem exigir login
+    TB_INACTIVITY_MS  tempo sem telemetria ate o dispositivo ser marcado como
+                 inativo, em milissegundos        (padrao 60000)
 """
 
 import json
@@ -32,6 +34,8 @@ TB_PASSWORD = os.environ.get("TB_PASSWORD", "tenant")
 DEVICE_NAME = os.environ.get("TB_DEVICE", "GreenPi-RPi5")
 DASHBOARD_TITLE = "GreenPi Monitor - Ambiente"
 MAKE_PUBLIC = os.environ.get("TB_PUBLIC", "0") == "1"
+# Tempo sem telemetria apos o qual o dispositivo e considerado inativo.
+INACTIVITY_TIMEOUT_MS = int(os.environ.get("TB_INACTIVITY_MS", 60_000))
 USE_DASHBOARD_TIMEWINDOW = os.environ.get("TB_DASH_TW", "1") == "1"
 
 _jwt = None
@@ -83,7 +87,25 @@ def ensure_device():
         print(f"[ok] dispositivo '{DEVICE_NAME}' criado")
     device_id = device["id"]["id"]
     token = api(f"/api/device/{device_id}/credentials")["credentialsId"]
+    set_inactivity_timeout(device_id)
     return device_id, token
+
+
+def set_inactivity_timeout(device_id):
+    """
+    Define em quanto tempo sem telemetria o dispositivo passa a 'inativo'.
+
+    Sem isso o ThingsBoard usa o padrao de 10 minutos e, ate la, nada indica que
+    a Raspberry Pi foi desligada: o dashboard segue exibindo a ultima leitura
+    como se fosse a atual. Com o atributo definido, o servidor marca o
+    dispositivo como inativo e atualiza o atributo 'active', que o dashboard le.
+    """
+    api(
+        f"/api/plugins/telemetry/DEVICE/{device_id}/SERVER_SCOPE",
+        "POST",
+        {"inactivityTimeout": INACTIVITY_TIMEOUT_MS},
+    )
+    print(f"[ok] timeout de inatividade: {INACTIVITY_TIMEOUT_MS // 1000} s")
 
 
 # --------------------------------------------------------------- dashboard

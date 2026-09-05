@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -32,6 +34,21 @@ class MainActivity : AppCompatActivity() {
     @Volatile private var polling = false
 
     private val observer: (Repository.State) -> Unit = { render(it) }
+
+    /**
+     * Redesenha a tela periodicamente mesmo sem dado novo.
+     *
+     * A deteccao de leitura obsoleta depende da passagem do tempo, nao da
+     * chegada de uma amostra. Sem este ciclo, uma Pi desligada congelaria a
+     * interface no ultimo render bem-sucedido - exatamente o que se quer evitar.
+     */
+    private val ticker = Handler(Looper.getMainLooper())
+    private val tick = object : Runnable {
+        override fun run() {
+            render(Repository.state)
+            ticker.postDelayed(this, 5_000)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,9 +81,11 @@ class MainActivity : AppCompatActivity() {
         super.onStart()
         Repository.observe(observer)
         if (!hasSensors) startRemotePolling()
+        ticker.post(tick)
     }
 
     override fun onStop() {
+        ticker.removeCallbacks(tick)
         Repository.removeObserver(observer)
         stopRemotePolling()
         super.onStop()
@@ -94,14 +113,18 @@ class MainActivity : AppCompatActivity() {
                                "pressure", "light", "cpu_temp", "wifi_rssi")
                     )
                     fun num(k: String) = values[k]?.toDoubleOrNull() ?: Double.NaN
-                    remoteSample = EnvironmentSample(
+                    // O timestamp vem da plataforma, nunca do relogio local: e ele
+                    // que revela uma leitura parada no tempo quando a Pi desliga.
+                    val sampledAt = values.values.maxOfOrNull { it.ts }
+                    remoteSample = if (sampledAt == null) null else EnvironmentSample(
                         temperature = num("temperature"),
                         temperatureRaw = num("temperature_raw"),
                         humidity = num("humidity"),
                         pressure = num("pressure"),
                         light = values["light"]?.toDoubleOrNull()?.toInt() ?: 0,
                         cpuTemperature = num("cpu_temp"),
-                        wifiRssi = values["wifi_rssi"]?.toDoubleOrNull()?.toInt()
+                        wifiRssi = values["wifi_rssi"]?.toDoubleOrNull()?.toInt(),
+                        timestamp = sampledAt
                     )
                     runOnUiThread {
                         binding.tvError.visibility = android.view.View.GONE
@@ -151,6 +174,11 @@ class MainActivity : AppCompatActivity() {
 
         val sample = state.sample ?: remoteSample
         if (sample != null) {
+            // Uma leitura antiga nao descreve mais o ambiente. Ela continua na
+            // tela como referencia, mas esmaecida e sob um aviso explicito -
+            // caso contrario a Pi desligada passa por Pi funcionando.
+            val stale = sample.isStale(settings.staleAfterMillis)
+
             binding.tvTemp.text = fmt(sample.temperature, 1)
             binding.tvTempSub.text = "graus C  (bruto ${fmt(sample.temperatureRaw, 1)})"
             binding.tvHum.text = fmt(sample.humidity, 0)
@@ -159,13 +187,25 @@ class MainActivity : AppCompatActivity() {
             binding.tvCpu.text = fmt(sample.cpuTemperature, 1)
             binding.tvRssi.text = sample.wifiRssi?.toString() ?: "--"
 
-            tint(binding.tvTemp, EnvStatus.forTemperature(sample.temperature))
-            tint(binding.tvHum, EnvStatus.forHumidity(sample.humidity))
-            tint(binding.tvLight, EnvStatus.forLight(sample.light))
+            if (stale) {
+                tint(binding.tvTemp, EnvStatus.DESCONHECIDO)
+                tint(binding.tvHum, EnvStatus.DESCONHECIDO)
+                tint(binding.tvLight, EnvStatus.DESCONHECIDO)
+            } else {
+                tint(binding.tvTemp, EnvStatus.forTemperature(sample.temperature))
+                tint(binding.tvHum, EnvStatus.forHumidity(sample.humidity))
+                tint(binding.tvLight, EnvStatus.forLight(sample.light))
+            }
+            dim(stale)
 
-            val status = sample.status()
-            binding.tvStatus.text = "AMBIENTE ${status.label}"
-            binding.tvStatusDetail.text = describe(sample, status)
+            val status = if (stale) EnvStatus.DESCONHECIDO else sample.status()
+            binding.tvStatus.text = if (stale) "SEM CONTATO" else "AMBIENTE ${status.label}"
+            binding.tvStatusDetail.text = if (stale) {
+                "Ultima leitura ha ${formatAge(sample.ageMillis())} - a Raspberry Pi " +
+                        "pode estar desligada ou fora da rede"
+            } else {
+                describe(sample, status)
+            }
             binding.cardStatus.setCardBackgroundColor(ContextCompat.getColor(this, colorOf(status)))
         }
 
@@ -205,6 +245,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun tint(view: android.widget.TextView, status: EnvStatus) {
         view.setTextColor(ContextCompat.getColor(this, colorOf(status)))
+    }
+
+    /** Esmaece os numeros quando eles deixam de representar o estado atual. */
+    private fun dim(stale: Boolean) {
+        val alpha = if (stale) 0.45f else 1f
+        listOf(
+            binding.tvTemp, binding.tvTempSub, binding.tvHum, binding.tvLight,
+            binding.tvPress, binding.tvCpu, binding.tvRssi
+        ).forEach { it.alpha = alpha }
     }
 
     private fun fmt(v: Double, decimals: Int) =

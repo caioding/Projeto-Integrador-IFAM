@@ -61,6 +61,17 @@ class Settings(context: Context) {
         get() = prefs.getString("tb_pass", "") ?: ""
         set(v) = prefs.edit { putString("tb_pass", v) }
 
+    /**
+     * Prazo apos o qual a ultima leitura deixa de valer como condicao atual.
+     *
+     * Sao tres periodos de coleta: tolera a perda de duas publicacoes seguidas
+     * (rede instavel) sem alarme falso, mas denuncia rapidamente uma Raspberry
+     * Pi desligada. O piso de 30 s evita que intervalos muito curtos deixem o
+     * painel piscando entre "ao vivo" e "sem contato".
+     */
+    val staleAfterMillis: Long
+        get() = maxOf(30_000L, intervalSeconds * 3 * 1000L)
+
     val isConfigured: Boolean
         get() = host.isNotEmpty() && accessToken.isNotEmpty()
 }

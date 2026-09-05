@@ -38,6 +38,30 @@ data class EnvironmentSample(
         EnvStatus.forHumidity(humidity),
         EnvStatus.forLight(light)
     ).maxByOrNull { it.severity } ?: EnvStatus.OK
+
+    /** Ha quanto tempo esta amostra foi registrada, em milissegundos. */
+    fun ageMillis(now: Long = System.currentTimeMillis()): Long = now - timestamp
+
+    /**
+     * Uma amostra e considerada obsoleta quando passa do prazo em que a proxima
+     * ja deveria ter chegado. Nesse caso os valores continuam na tela, mas nao
+     * podem ser apresentados como a condicao atual do ambiente.
+     */
+    fun isStale(maxAgeMillis: Long, now: Long = System.currentTimeMillis()): Boolean =
+        ageMillis(now) > maxAgeMillis
+}
+
+/**
+ * Formata uma duracao como texto curto para a interface ("12 s", "3 min", "2 h").
+ */
+fun formatAge(millis: Long): String {
+    val s = millis / 1000
+    return when {
+        s < 60 -> "$s s"
+        s < 3600 -> "${s / 60} min"
+        s < 86400 -> "${s / 3600} h"
+        else -> "${s / 86400} d"
+    }
 }
 
 /**

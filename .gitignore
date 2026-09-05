@@ -24,3 +24,7 @@ SimpleMQTT/
 
 # Zips gerados manualmente a partir das pastas (contêm artefatos de build).
 *.zip
+
+# Cache do Python
+__pycache__/
+*.pyc

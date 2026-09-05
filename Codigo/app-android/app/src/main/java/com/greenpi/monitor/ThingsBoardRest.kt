@@ -17,6 +17,11 @@ import java.net.URLEncoder
  *
  * Todas as chamadas sao bloqueantes e devem ser feitas fora da thread principal.
  */
+/** Valor de telemetria acompanhado do instante em que a plataforma o registrou. */
+data class TsValue(val ts: Long, val value: String) {
+    fun toDoubleOrNull(): Double? = value.toDoubleOrNull()
+}
+
 class ThingsBoardRest(host: String, port: Int) {
 
     private val base = "http://$host:$port"
@@ -69,16 +74,24 @@ class ThingsBoardRest(host: String, port: Int) {
     /**
      * Le o valor mais recente de cada chave informada.
      * Sem intervalo de tempo, o ThingsBoard devolve apenas a ultima amostra.
+     *
+     * O timestamp acompanha o valor porque o painel precisa saber a IDADE do
+     * dado: se a Raspberry Pi for desligada, a plataforma continua devolvendo a
+     * ultima leitura gravada, indefinidamente. Sem o "ts" nao ha como distinguir
+     * uma leitura de agora de uma leitura de ontem.
      */
-    fun latestValues(deviceId: String, keys: List<String>): Map<String, String> {
+    fun latestValues(deviceId: String, keys: List<String>): Map<String, TsValue> {
         val path = "/api/plugins/telemetry/DEVICE/$deviceId/values/timeseries" +
                 "?keys=${keys.joinToString(",")}"
         val json = JSONObject(request("GET", path))
 
-        val result = mutableMapOf<String, String>()
+        val result = mutableMapOf<String, TsValue>()
         for (key in keys) {
             val arr = json.optJSONArray(key) ?: continue
-            if (arr.length() > 0) result[key] = arr.getJSONObject(0).getString("value")
+            if (arr.length() > 0) {
+                val item = arr.getJSONObject(0)
+                result[key] = TsValue(item.getLong("ts"), item.getString("value"))
+            }
         }
         return result
     }
