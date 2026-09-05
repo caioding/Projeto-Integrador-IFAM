@@ -83,6 +83,30 @@ O fator `k` é ajustável na tela de configurações, porque depende da montagem
 O valor bruto continua sendo publicado em `temperature_raw`, o que mantém a
 compensação auditável.
 
+## Antes de coletar: apagar a matriz de LED
+
+A matriz de LED 8x8 do Sense HAT acende inteira no boot e permanece acesa. Ela
+fica a poucos centimetros do TCS3400, e o sensor nao distingue a luz do ambiente
+da luz produzida pela propria placa — o mesmo tipo de interferencia que o SoC
+causa na temperatura.
+
+O efeito foi medido neste kit: com a matriz acesa a leitura ficava em torno de
+**545 contagens**; apagada, em torno de **79**. A placa respondia por cerca de
+**85%** do valor. Pior que o desvio: como o LED sozinho injetava aproximadamente
+466 contagens, a leitura nunca descia abaixo do limiar de pouca luz, nem no
+escuro total, e o alerta correspondente nao tinha como disparar.
+
+Portanto, **antes de iniciar a coleta**, apague a matriz na Raspberry Pi:
+
+```bash
+sensehat_cli clear
+```
+
+E preciso repetir a cada boot. O aplicativo nao controla a matriz: ele fala
+apenas com os enderecos `0x5F`, `0x5C` e `0x39`, nunca com o `0x46` do ATtiny88
+que a comanda. Dados de luminosidade coletados sem esse passo estao inflados e
+nao representam o ambiente.
+
 ## Deteccao de perda de contato
 
 Uma plataforma de telemetria guarda a ultima leitura recebida e a devolve

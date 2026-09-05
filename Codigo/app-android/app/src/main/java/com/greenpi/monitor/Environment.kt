@@ -89,9 +89,24 @@ enum class EnvStatus(val severity: Int, val label: String) {
             else -> ALERTA
         }
 
+        /**
+         * Faixas em contagens brutas do canal "clear" do TCS3400, com o sensor
+         * configurado a 178 ms de integracao e ganho 16x. Nao sao lux: mudar o
+         * ganho ou o tempo de integracao muda a escala.
+         *
+         * Os limiares anteriores (100 / 30) foram calibrados sem perceber que a
+         * matriz de LED do proprio Sense HAT somava cerca de 466 contagens a
+         * toda leitura. Com aquele piso artificial o valor nunca descia de 100,
+         * e o alerta de pouca luz nao tinha como disparar nem no escuro total.
+         *
+         * A referencia atual e uma medicao com a matriz apagada: sala iluminada,
+         * durante o dia, com o sensor voltado para cima -> cerca de 79 contagens.
+         * Convem refinar comparando com um luximetro antes de tratar as faixas
+         * como definitivas.
+         */
         fun forLight(l: Int) = when {
-            l > 100 -> OK
-            l >= 30 -> ATENCAO
+            l > 60 -> OK
+            l >= 20 -> ATENCAO
             else -> ALERTA
         }
 
